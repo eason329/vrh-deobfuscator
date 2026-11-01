@@ -646,7 +646,23 @@ export class PIXIVBasisExtension extends Extension {
 // so anonymous requests to /optimized_preview get a 404. We pull the logged-in session
 // cookie (_vroid_session, scoped to .vroid.com) straight out of the Firefox cookie store.
 async function getVRoidSessionCookie() {
-	const profilesDir = path.join(os.homedir(), "AppData", "Roaming", "Mozilla", "Firefox", "Profiles");
+    const platform = process.platform;
+    let profilesDir;
+    if ( platform === "cygwin" || platform === "win32") {
+        profilesDir = path.join(os.homedir(), "AppData", "Roaming", "Mozilla", "Firefox", "Profiles");
+    }
+    else if (platform === "linux") {
+        const snapProfilesDir = path.join(os.homedir(), "snap", "firefox", "common", ".mozilla", "firefox");
+        const standardProfilesDir = path.join(os.homedir(), ".mozilla", "firefox");
+        if (fs.existsSync(snapProfilesDir)) {
+            profilesDir = snapProfilesDir;
+        } else {
+            profilesDir = standardProfilesDir;
+        }
+    }
+    else {
+	    profilesDir = path.join(os.homedir(), ".mozilla", "firefox");
+	}
 	if (!existsSync(profilesDir)) return null;
 
 	const tmpDb = path.join(os.tmpdir(), `vrh_cookies_${process.pid}.sqlite`);
